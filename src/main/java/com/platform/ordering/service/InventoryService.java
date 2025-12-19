@@ -42,4 +42,18 @@ public class InventoryService {
 
         return reservation;
     }
+
+    @Transactional
+    public void releaseReservation(InventoryReservation reservation) {
+
+        if (!reservation.isActive()) {
+            return; // idempotent safety
+        }
+
+        Product product = reservation.getProduct();
+        product.increaseQuantity(reservation.getQuantity());
+
+        reservation.deactivate();
+    }
+
 }

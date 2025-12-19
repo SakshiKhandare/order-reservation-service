@@ -35,4 +35,11 @@ public class OrderController {
                 )
         );
     }
+
+    // User abandoned checkout → release held inventory → order is no longer valid.
+    @PostMapping("/{orderNumber}/cancel")
+    public ResponseEntity<Void> cancelOrder(@PathVariable String orderNumber) {
+        orderService.cancelOrder(orderNumber);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -4,6 +4,8 @@ import com.platform.ordering.entity.InventoryReservation;
 import com.platform.ordering.entity.Order;
 import com.platform.ordering.entity.OrderItem;
 import com.platform.ordering.entity.Product;
+import com.platform.ordering.entity.enums.OrderStatus;
+import com.platform.ordering.repository.InventoryReservationRepository;
 import com.platform.ordering.repository.OrderRepository;
 import com.platform.ordering.repository.ProductRepository;
 import org.springframework.stereotype.Service;
@@ -17,13 +19,16 @@ public class OrderService {
     private final InventoryService inventoryService;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final InventoryReservationRepository inventoryReservationRepository;
 
     public OrderService(InventoryService inventoryService,
                         ProductRepository productRepository,
-                        OrderRepository orderRepository) {
+                        OrderRepository orderRepository,
+                        InventoryReservationRepository inventoryReservationRepository) {
         this.inventoryService = inventoryService;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
+        this.inventoryReservationRepository = inventoryReservationRepository;
     }
 
     @Transactional
@@ -48,4 +53,28 @@ public class OrderService {
     private String generateOrderNumber() {
         return "ORD-" + UUID.randomUUID();
     }
+
+    @Transactional
+    public void cancelOrder(String orderNumber){
+
+        Order order = orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+        if(order.getStatus() != OrderStatus.RESERVED){
+            throw new IllegalStateException("Only reserved orders can be cancelled");
+        }
+
+        // release inventory for each item
+        order.getItems().forEach(item ->{
+            InventoryReservation reservation =
+                    inventoryReservationRepository
+                            .findByProductAndActiveTrue(item.getProduct())
+                            .orElseThrow(() -> new IllegalStateException("Active reservation not found"));
+
+            inventoryService.releaseReservation(reservation);
+        });
+
+        order.cancel();
+    }
+
 }
