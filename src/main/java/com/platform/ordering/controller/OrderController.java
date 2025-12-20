@@ -2,6 +2,7 @@ package com.platform.ordering.controller;
 
 import com.platform.ordering.dto.request.CreateOrderRequest;
 import com.platform.ordering.dto.response.CreateOrderResponse;
+import com.platform.ordering.dto.response.OrderStatusResponse;
 import com.platform.ordering.entity.Order;
 import com.platform.ordering.service.OrderService;
 import jakarta.validation.Valid;
@@ -38,8 +39,26 @@ public class OrderController {
 
     // User abandoned checkout → release held inventory → order is no longer valid.
     @PostMapping("/{orderNumber}/cancel")
-    public ResponseEntity<Void> cancelOrder(@PathVariable String orderNumber) {
-        orderService.cancelOrder(orderNumber);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<OrderStatusResponse> cancelOrder(
+            @PathVariable String orderNumber) {
+
+        Order order = orderService.cancelOrder(orderNumber);
+
+        return ResponseEntity.ok(
+                new OrderStatusResponse(order.getOrderNumber(), order.getStatus())
+        );
     }
+
+    // Payment succeeded. This order is now final
+    @PostMapping("/{orderNumber}/confirm")
+    public ResponseEntity<OrderStatusResponse> confirmOrder(
+            @PathVariable String orderNumber) {
+
+        Order order = orderService.confirmOrder(orderNumber);
+
+        return ResponseEntity.ok(
+                new OrderStatusResponse(order.getOrderNumber(), order.getStatus())
+        );
+    }
+
 }

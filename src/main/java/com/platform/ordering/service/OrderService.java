@@ -55,7 +55,7 @@ public class OrderService {
     }
 
     @Transactional
-    public void cancelOrder(String orderNumber){
+    public Order cancelOrder(String orderNumber){
 
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
@@ -75,6 +75,26 @@ public class OrderService {
         });
 
         order.cancel();
+        return order;
     }
+
+    @Transactional
+    public Order confirmOrder(String orderNumber){
+
+        Order order = orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+        order.confirm();
+
+        // deactivate reservation (inventory stays reduced)
+        order.getItems().forEach(item -> {
+           inventoryReservationRepository
+                   .findByProductAndActiveTrue(item.getProduct())
+                   .ifPresent(InventoryReservation::deactivate);
+        });
+
+        return order;
+    }
+
 
 }
