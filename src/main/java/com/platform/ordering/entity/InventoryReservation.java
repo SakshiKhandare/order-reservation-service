@@ -1,7 +1,6 @@
 package com.platform.ordering.entity;
 
 import jakarta.persistence.*;
-
 import java.time.Instant;
 
 @Entity
@@ -13,7 +12,7 @@ public class InventoryReservation {
     private Long id;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
     @Column(nullable = false)
@@ -25,18 +24,31 @@ public class InventoryReservation {
     @Column(nullable = false)
     private Boolean active;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
+
     protected InventoryReservation() {
         // for JPA
     }
 
-    public InventoryReservation(Product product, Integer quantity, Instant expiresAt) {
+    public InventoryReservation(Product product, Integer quantity, Order order, Instant expiresAt) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Quantity must be positive");
         }
         this.product = product;
         this.quantity = quantity;
+        this.order = order;
         this.expiresAt = expiresAt;
         this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
+    public boolean isExpired() {
+        return Instant.now().isAfter(this.expiresAt);
     }
 
     public Long getId() {
@@ -59,12 +71,8 @@ public class InventoryReservation {
         return active;
     }
 
-    public boolean isExpired() {
-        return Instant.now().isAfter(this.expiresAt);
+    public Order getOrder() {
+        return order;
     }
-
-    public void deactivate() {
-        this.active = false;
-    }
-
 }
+

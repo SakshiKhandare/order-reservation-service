@@ -1,21 +1,17 @@
 package com.platform.ordering.dto.request;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
+import java.util.List;
 
 public class CreateOrderRequest {
 
-    @NotBlank
-    private String sku;
+    private List<OrderItemRequest> items;
 
-    @Min(1)
-    private int quantity;
-
-    public String getSku() {
-        return sku;
+    public List<OrderItemRequest> getItems() {
+        return items;
     }
 
-    public int getQuantity() {
-        return quantity;
+    public void setItems(List<OrderItemRequest> items) {
+        this.items = items;
     }
 }
+

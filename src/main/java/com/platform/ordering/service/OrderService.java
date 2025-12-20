@@ -1,5 +1,7 @@
 package com.platform.ordering.service;
 
+import com.platform.ordering.dto.request.CreateOrderRequest;
+import com.platform.ordering.dto.request.OrderItemRequest;
 import com.platform.ordering.entity.InventoryReservation;
 import com.platform.ordering.entity.Order;
 import com.platform.ordering.entity.OrderItem;
@@ -32,23 +34,32 @@ public class OrderService {
     }
 
     @Transactional
-    public Order createOrder(String sku, int quantity) {
+    public Order createOrder(CreateOrderRequest request) {
 
-        // Create order with business identifier
         Order order = new Order(generateOrderNumber());
 
-        // Reserve inventory
-        InventoryReservation reservation =
-                inventoryService.reserve(sku, quantity);
+        // Save order FIRST (so it gets an ID)
+        orderRepository.save(order);
 
-        // Create order item
-        Product product = reservation.getProduct();
-        OrderItem item = new OrderItem(product, quantity);
-        order.addItem(item);
+        // Now reserve inventory
+        for (OrderItemRequest itemReq : request.getItems()) {
 
-        // Persist order (items cascade)
+            InventoryReservation reservation =
+                    inventoryService.reserve(
+                            itemReq.getSku(),
+                            itemReq.getQuantity(),
+                            order
+                    );
+
+            Product product = reservation.getProduct();
+            OrderItem item = new OrderItem(product, itemReq.getQuantity());
+            order.addItem(item);
+        }
+
+        // Save order again (items cascade)
         return orderRepository.save(order);
     }
+
 
     private String generateOrderNumber() {
         return "ORD-" + UUID.randomUUID();

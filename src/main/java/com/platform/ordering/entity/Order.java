@@ -82,8 +82,9 @@ public class Order {
     }
 
     public void expire() {
-        if (this.status == OrderStatus.RESERVED) {
-            this.status = OrderStatus.EXPIRED;
+        if (this.status != OrderStatus.RESERVED) {
+            return;
         }
+        this.status = OrderStatus.EXPIRED;
     }
 }

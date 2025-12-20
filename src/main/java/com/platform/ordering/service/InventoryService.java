@@ -1,6 +1,7 @@
 package com.platform.ordering.service;
 
 import com.platform.ordering.entity.InventoryReservation;
+import com.platform.ordering.entity.Order;
 import com.platform.ordering.entity.Product;
 import com.platform.ordering.repository.InventoryReservationRepository;
 import com.platform.ordering.repository.ProductRepository;
@@ -15,32 +16,35 @@ public class InventoryService {
     private static final int RESERVATION_TTL_SECONDS = 300; // 5 minutes
 
     private final ProductRepository productRepository;
-    private final InventoryReservationRepository reservationRepository;
+    private final InventoryReservationRepository inventoryReservationRepository;
 
     public InventoryService(ProductRepository productRepository,
-                            InventoryReservationRepository reservationRepository) {
+                            InventoryReservationRepository inventoryReservationRepository) {
         this.productRepository = productRepository;
-        this.reservationRepository = reservationRepository;
+        this.inventoryReservationRepository = inventoryReservationRepository;
     }
 
     @Transactional
-    public InventoryReservation reserve(String sku, int quantity) {
+    public InventoryReservation reserve(String sku, int quantity, Order order) {
 
         Product product = productRepository.findBySku(sku)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+                .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        // optimistic locking happens here
+        if (product.getAvailableQuantity() < quantity) {
+            throw new RuntimeException("Insufficient stock");
+        }
+
         product.decreaseQuantity(quantity);
 
-        InventoryReservation reservation = new InventoryReservation(
-                product,
-                quantity,
-                Instant.now().plusSeconds(RESERVATION_TTL_SECONDS)
-        );
+        InventoryReservation reservation =
+                new InventoryReservation(
+                        product,
+                        quantity,
+                        order,
+                        Instant.now().plusSeconds(300) // 5 min hold
+                );
 
-        reservationRepository.save(reservation);
-
-        return reservation;
+        return inventoryReservationRepository.save(reservation);
     }
 
     @Transactional
