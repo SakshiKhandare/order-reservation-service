@@ -5,10 +5,12 @@ import com.platform.ordering.repository.InventoryReservationRepository;
 import com.platform.ordering.service.InventoryService;
 import jakarta.transaction.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.List;
 
+@Component
 public class ReservationExpiryJob {
 
     private final InventoryReservationRepository reservationRepository;
