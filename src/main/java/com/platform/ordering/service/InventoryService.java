@@ -3,6 +3,7 @@ package com.platform.ordering.service;
 import com.platform.ordering.entity.InventoryReservation;
 import com.platform.ordering.entity.Order;
 import com.platform.ordering.entity.Product;
+import com.platform.ordering.entity.enums.OrderStatus;
 import com.platform.ordering.repository.InventoryReservationRepository;
 import com.platform.ordering.repository.ProductRepository;
 import org.springframework.stereotype.Service;
@@ -41,7 +42,7 @@ public class InventoryService {
                         product,
                         quantity,
                         order,
-                        Instant.now().plusSeconds(300) // 5 min hold
+                        Instant.now().plusSeconds(RESERVATION_TTL_SECONDS) // 5 min hold
                 );
 
         return inventoryReservationRepository.save(reservation);
@@ -58,6 +59,22 @@ public class InventoryService {
         product.increaseQuantity(reservation.getQuantity());
 
         reservation.deactivate();
+    }
+
+    @Transactional
+    public void release(InventoryReservation reservation) {
+
+        if (!reservation.isActive()) return;
+
+        Product product = reservation.getProduct();
+        product.increaseQuantity(reservation.getQuantity());
+
+        reservation.deactivate();
+
+        Order order = reservation.getOrder();
+        if (order != null && order.getStatus() == OrderStatus.RESERVED) {
+            order.cancel();
+        }
     }
 
 }
