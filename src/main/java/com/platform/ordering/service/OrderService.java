@@ -107,5 +107,11 @@ public class OrderService {
         return order;
     }
 
+    @Transactional(readOnly = true)
+    public Order getOrderByOrderNumber(String orderNumber) {
+        return orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Order not found"));
+    }
 
 }
