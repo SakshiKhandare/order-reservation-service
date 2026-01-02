@@ -83,11 +83,31 @@ Run Instructions
 
     src/main/java
     └── com.example.orderreservation
-        ├── controller    -> REST endpoints
-        ├── service       -> Business logic
-        ├── repository    -> Data access layer
-        ├── entity        -> JPA entities
-        └── dto           -> API request/response models
+        ├── OrderReservationServiceApplication.java
+        │   -> Spring Boot application entry point
+        │
+        ├── controller
+        │   └── OrderController.java
+        │       -> Exposes REST endpoints for order operations
+        │
+        ├── service
+        │   └── OrderService.java
+        │       -> Contains business logic for orders and reservation
+        │
+        ├── repository
+        │   └── OrderRepository.java
+        │       -> JPA repository for persisting order entities
+        │
+        ├── entity
+        │   └── Order.java
+        │       -> JPA entity representing an order with status fields
+        │
+        └── dto
+            ├── OrderRequest.java
+            │   -> API request model for creating orders
+            └── OrderResponse.java
+                -> API response model for order data
+
 
 ## Why This Project Matters
 The service demonstrates core backend engineering principles such as domain-driven layering, RESTful API design, transactional data handling, and maintainable code organization suitable for real-world systems.
